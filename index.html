@@ -140,7 +140,7 @@
 </div>
 
 <script>
-const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019f67dc-53f9-7b1a-a968-bd4bc404c4a8";
+const BLOB_URL = "https://obesity-dg-tracker-default-rtdb.firebaseio.com/state.json";
 
 const SESSIONS = [
  {n:1, lectures:[
@@ -268,7 +268,7 @@ function setSync(cls,text){
 async function fetchState(){
   const r = await fetch(BLOB_URL, {headers:{"Accept":"application/json"}, cache:"no-store"});
   if(!r.ok) throw new Error("GET "+r.status);
-  const j = await r.json();
+  const j = (await r.json()) || {};
   return {david:j.david||{}, georgi:j.georgi||{}};
 }
 async function putState(s){
