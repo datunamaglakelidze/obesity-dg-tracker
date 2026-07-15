@@ -245,14 +245,14 @@ function fmt(n){ return (Math.round(n*100)/100).toString().replace(/\.?0+$/,"").
 function renderAll(){
   ALL.forEach(l=>{
     const id=l[0], k=cssId(id);
-    const d=!!state.david[id], g=!!state.georgi[id];
+    const d=!!state.david[k], g=!!state.georgi[k];
     const bd=document.getElementById("d-"+k), bg=document.getElementById("g-"+k);
     bd.classList.toggle("on",d); bg.classList.toggle("on",g);
     bd.disabled = me!=="david"; bg.disabled = me!=="georgi";
     document.getElementById("row-"+k).classList.toggle("both", d&&g);
   });
   ["david","georgi"].forEach(w=>{
-    const done = ALL.filter(l=>state[w][l[0]]);
+    const done = ALL.filter(l=>state[w][cssId(l[0])]);
     const cr = done.reduce((a,l)=>a+l[2],0);
     document.getElementById("stat-"+w).textContent =
       done.length+" / "+TOTAL+" lectures · "+(Math.round(cr*100)/100)+" CME credits earned";
@@ -282,9 +282,10 @@ async function putState(s){
 
 function toggle(who,id){
   if(who!==me) return;
-  pendingOps.push({who,id});
+  const k = cssId(id);   // Firebase keys cannot contain "."
+  pendingOps.push({who,k});
   // optimistic UI
-  if(state[who][id]) delete state[who][id]; else state[who][id]=true;
+  if(state[who][k]) delete state[who][k]; else state[who][k]=true;
   renderAll();
   processOps();
 }
@@ -302,6 +303,7 @@ async function processOps(){
     setSync("ok","Synced · "+timeNow());
   }catch(e){
     setSync("err","Sync failed — will retry");
+    pendingOps.push({retry:true});   // keep the write queued so retry actually re-sends
     setTimeout(processOps, 4000);
   }finally{
     syncBusy = false;
