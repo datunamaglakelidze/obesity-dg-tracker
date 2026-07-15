@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obesity D&amp;G — Study Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Obesity D&amp;G">
+<meta name="theme-color" content="#121820">
+<style>
+  :root{
+    --bg:#121820; --card:#1A222E; --card2:#202A38; --line:#2A3444;
+    --text:#EDEFF4; --muted:#8A93A5;
+    --david:#6B9BEE; --georgi:#3CBFA0;
+    --david-dim:rgba(107,155,238,.14); --georgi-dim:rgba(60,191,160,.14);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{background:var(--bg);}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px);
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:20px 14px 0;}
+  h1{
+    font-family:Georgia,"Times New Roman",serif; font-weight:600;
+    font-size:21px; line-height:1.3; margin:6px 2px 2px; letter-spacing:.2px;
+  }
+  .sub{color:var(--muted); font-size:12.5px; margin:0 2px 18px;}
+  /* progress cards */
+  .progress{display:flex; flex-direction:column; gap:10px; margin-bottom:22px;}
+  .pcard{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px;}
+  .prow{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .pname{font-weight:700; font-size:15px;}
+  .pname.david{color:var(--david);} .pname.georgi{color:var(--georgi);}
+  .pstat{color:var(--muted); font-size:12.5px; text-align:right;}
+  .bar{height:8px; background:#0D1218; border-radius:99px; overflow:hidden;}
+  .fill{height:100%; border-radius:99px; width:0%; transition:width .45s ease;}
+  .fill.david{background:var(--david);} .fill.georgi{background:var(--georgi);}
+  /* sync status */
+  .sync{display:flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; margin:-10px 2px 16px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:#4A5568; flex:none;}
+  .dot.ok{background:#3CBFA0;} .dot.err{background:#E07A5F;} .dot.busy{background:#E9C46A;}
+  /* sessions */
+  .session{margin-bottom:26px;}
+  .shead{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin:0 4px 10px; color:var(--muted);
+  }
+  .shead h2{font-size:13px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--text); margin:0;}
+  .shead span{font-size:11.5px;}
+  .lec{
+    display:flex; align-items:center; gap:10px;
+    background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:12px 12px 12px 14px; margin-bottom:8px;
+    transition:background .3s, border-color .3s;
+  }
+  .lec.both{background:#1D2A2C; border-color:#2E4A44;}
+  .lecinfo{flex:1; min-width:0;}
+  .lnum{color:var(--muted); font-size:11px; font-weight:600; letter-spacing:.6px; margin-bottom:3px;}
+  .lnum b{color:var(--muted); font-weight:600;}
+  .ltitle{font-size:14.5px; line-height:1.35;}
+  .checks{display:flex; gap:8px; flex:none;}
+  button.chk{
+    width:46px; height:46px; border-radius:12px; border:1.5px solid var(--line);
+    background:var(--card2); color:transparent; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .18s ease; padding:0;
+  }
+  button.chk svg{width:22px; height:22px; opacity:0; transform:scale(.6); transition:all .18s ease;}
+  button.chk.on svg{opacity:1; transform:scale(1);}
+  button.chk.david{border-color:rgba(107,155,238,.4);}
+  button.chk.georgi{border-color:rgba(60,191,160,.4);}
+  button.chk.david.on{background:var(--david); border-color:var(--david);}
+  button.chk.georgi.on{background:var(--georgi); border-color:var(--georgi);}
+  button.chk:disabled{opacity:.5; cursor:default;}
+  button.chk.david:not(:disabled):active{background:var(--david-dim);}
+  button.chk.georgi:not(:disabled):active{background:var(--georgi-dim);}
+  button.chk.david.on:not(:disabled):active{background:var(--david);}
+  button.chk.georgi.on:not(:disabled):active{background:var(--georgi);}
+  .collabel{display:flex; gap:8px; justify-content:flex-end; margin:0 4px 10px;}
+  .collabel span{width:46px; text-align:center; font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
+  .collabel .d{color:var(--david);} .collabel .g{color:var(--georgi);}
+  /* identity overlay */
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,14,20,.92); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; z-index:50; padding:24px;
+  }
+  .obox{max-width:340px; width:100%; text-align:center;}
+  .obox h2{font-family:Georgia,serif; font-weight:600; font-size:22px; margin:0 0 6px;}
+  .obox p{color:var(--muted); font-size:13.5px; margin:0 0 22px;}
+  .obox button{
+    display:block; width:100%; padding:17px; margin-bottom:12px; border-radius:14px;
+    font-size:17px; font-weight:700; border:none; cursor:pointer; color:#0E1420;
+  }
+  .obox .bd{background:var(--david);} .obox .bg{background:var(--georgi);}
+  .me{font-size:12px; color:var(--muted); margin-top:2px;}
+  .me b.david{color:var(--david);} .me b.georgi{color:var(--georgi);}
+  .me a{color:var(--muted);}
+  footer{text-align:center; color:#4A5568; font-size:11px; margin-top:30px;}
+</style>
+</head>
+<body>
+<div id="identity" class="overlay" style="display:none;">
+  <div class="obox">
+    <h2>Who are you?</h2>
+    <p>Your choice is remembered on this device.<br>You'll only be able to check your own column.</p>
+    <button class="bd" onclick="setIdentity('david')">I'm David</button>
+    <button class="bg" onclick="setIdentity('georgi')">I'm Georgi</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>2026 Obesity: Etiology, Prevention, and Treatment</h1>
+  <p class="sub">41 lectures · 8 sessions · 31.25 CME credits</p>
+
+  <div class="progress">
+    <div class="pcard">
+      <div class="prow"><span class="pname david">David</span><span class="pstat" id="stat-david">0 / 41 lectures · 0 CME credits earned</span></div>
+      <div class="bar"><div class="fill david" id="bar-david"></div></div>
+    </div>
+    <div class="pcard">
+      <div class="prow"><span class="pname georgi">Georgi</span><span class="pstat" id="stat-georgi">0 / 41 lectures · 0 CME credits earned</span></div>
+      <div class="bar"><div class="fill georgi" id="bar-georgi"></div></div>
+    </div>
+  </div>
+
+  <div class="sync"><span class="dot" id="syncdot"></span><span id="synctext">Connecting…</span></div>
+  <p class="me" id="meline"></p>
+
+  <div class="collabel"><span class="d">David</span><span class="g">Georgi</span></div>
+  <div id="sessions"></div>
+
+  <footer>Checks sync automatically between devices.</footer>
+</div>
+
+<script>
+const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019f67dc-53f9-7b1a-a968-bd4bc404c4a8";
+
+const SESSIONS = [
+ {n:1, lectures:[
+  ["01.01","Epidemiology and Health Risks of Obesity",0.75],
+  ["01.02","How Bias and Stigma Influence the Outcomes of Obesity Prevention and Treatment",0.75],
+  ["01.03","Obesity Complications and Co-Morbidities",0.75],
+  ["01.04","Physiology and Pathophysiology of Obesity",0.75],
+  ["01.05","Genetics of Obesity and Weight Regulation",0.75],
+  ["01.06","In the Post-GLP1 World, Have We Cured Obesity?",0.75]]},
+ {n:2, lectures:[
+  ["02.01","Nutrition Recommendations for Adults with Obesity",0.75],
+  ["02.02","Weighty Matters: Low-Carbohydrate and Low-Fat Diets",0.75],
+  ["02.03","Food Order/Nutrient Sequence: Physiological Effects and Therapeutic Implications",0.75],
+  ["02.04","The Landscape of Behavioral Interventions in Obesity Medicine",0.75],
+  ["02.05","The Role of Physical Activity in Obesity Management",0.75]]},
+ {n:3, lectures:[
+  ["03.01","Guidelines and Standards of Care for the Treatment of Obesity",1.00],
+  ["03.02","Overview of the Medical Assessment of Adult Obesity",0.75],
+  ["03.03","On-Label Pharmacological Approaches to Obesity",0.75],
+  ["03.04","Off-Label Pharmacotherapy for Obesity",0.75],
+  ["03.05","Side Effects of Pharmacological Treatment and Their Management",1.00]]},
+ {n:4, lectures:[
+  ["04.01","Addressing Weight Bias in Clinical Settings",0.75],
+  ["04.02","Beyond BMI – Strategies to Optimize Clinician-Supported Weight Loss Plans",1.00],
+  ["04.03","Mental Health and Obesity",0.50],
+  ["04.04","Case Session: Pharmacology & Behavioral Obesity Medicine Strategies in Practice",0.50],
+  ["04.05","Obesity and Type 2 Diabetes",0.75],
+  ["04.06","Losing Weight and Keeping It Off: Different Problems, Different Solutions",0.75],
+  ["04.07","KEYNOTE: Obesity Across the Kidney Disease Continuum: from CKD Risk to Post-Transplant Outcomes",1.00]]},
+ {n:5, lectures:[
+  ["05.01","An Ounce of Prevention: A Brief Family-Centered Approach to Obesity Counseling in Pediatric Care",0.75],
+  ["05.02","Pharmacotherapy for Obesity in Youth",0.75],
+  ["05.03","Pediatric Metabolic and Bariatric Surgery: Meds +/− Surgery +/− Meds",1.00],
+  ["05.04","Case Session: Managing Pediatric Obesity in Practice",0.75]]},
+ {n:6, lectures:[
+  ["06.01","Women's Health and Obesity: How Midlife and Menopause Influence Weight",0.75],
+  ["06.02","Management of Weight-related Conditions: Metabolic Dysfunction-Associated Steatotic Liver Disease (MASLD)",0.75],
+  ["06.03","Management of Weight-Related Conditions: The Role of Sleep in Obesity",0.50],
+  ["06.04","Management of Weight-Related Conditions: The Obesity-Cancer Connection",0.50],
+  ["06.05","Management of Weight-Related Conditions: Obesity-Related Cardiovascular and Renal Disease: Risks and Care Strategies",0.50],
+  ["06.06","Obesity Medicine Certification Overview",0]]},
+ {n:7, lectures:[
+  ["07.01","Endobariatrics: Advanced Endoscopic Techniques",0.75],
+  ["07.02","Weight Loss Surgery: Pre/Post-Operative Processes, Procedures and Outcomes",0.75],
+  ["07.03","Complications of Bariatric Surgery",0.75],
+  ["07.04","Nutrient Metabolism and Obesity: Special Considerations After Bariatric Surgery",1.00],
+  ["07.05","Obesity in the Older Adult Population",0.75]]},
+ {n:8, lectures:[
+  ["08.01","Individualized and Long-Term Obesity Treatment Management",0.75],
+  ["08.02","Advanced Cases I: Obesity and Cancer — Complex Cases and Expert Panel Discussion",1.25],
+  ["08.03","Advanced Cases II: Navigating Obesity Care with Psychiatric Comorbidity — A Panel Case Discussion",1.25]]}
+];
+
+const ALL = SESSIONS.flatMap(s=>s.lectures);
+const TOTAL = ALL.length;
+const CREDITS = {}; ALL.forEach(l=>CREDITS[l[0]]=l[2]);
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#0E1420" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/></svg>';
+
+let me = localStorage.getItem("odg_identity") || null;
+let state = {david:{}, georgi:{}};
+let syncBusy = false, pendingOps = [];
+
+function setIdentity(who){
+  me = who;
+  localStorage.setItem("odg_identity", who);
+  document.getElementById("identity").style.display = "none";
+  renderMe(); renderAll();
+}
+function renderMe(){
+  const el = document.getElementById("meline");
+  if(!me){ el.innerHTML=""; return; }
+  const name = me==="david" ? "David" : "Georgi";
+  el.innerHTML = 'Signed in as <b class="'+me+'">'+name+'</b> · <a href="#" onclick="switchUser(event)">switch</a>';
+}
+function switchUser(e){
+  e.preventDefault();
+  document.getElementById("identity").style.display = "flex";
+}
+
+function buildDOM(){
+  const root = document.getElementById("sessions");
+  root.innerHTML = SESSIONS.map(s=>{
+    const cr = s.lectures.reduce((a,l)=>a+l[2],0);
+    return '<div class="session"><div class="shead"><h2>Session '+s.n+'</h2><span>'+
+      s.lectures.length+' lectures · '+fmt(cr)+' CME</span></div>'+
+      s.lectures.map(l=>{
+        const [id,title,c] = l;
+        return '<div class="lec" id="row-'+cssId(id)+'">'+
+          '<div class="lecinfo"><div class="lnum"><b>'+id+'</b>'+(c?' · '+fmt(c)+' CME':' · no credit')+'</div>'+
+          '<div class="ltitle">'+esc(title)+'</div></div>'+
+          '<div class="checks">'+
+          '<button class="chk david" id="d-'+cssId(id)+'" onclick="toggle(\'david\',\''+id+'\')" aria-label="David: '+esc(title)+'">'+CHECK_SVG+'</button>'+
+          '<button class="chk georgi" id="g-'+cssId(id)+'" onclick="toggle(\'georgi\',\''+id+'\')" aria-label="Georgi: '+esc(title)+'">'+CHECK_SVG+'</button>'+
+          '</div></div>';
+      }).join('')+'</div>';
+  }).join('');
+}
+function cssId(id){ return id.replace(".","_"); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function fmt(n){ return (Math.round(n*100)/100).toString().replace(/\.?0+$/,"").replace(/^0\./,"."); }
+
+function renderAll(){
+  ALL.forEach(l=>{
+    const id=l[0], k=cssId(id);
+    const d=!!state.david[id], g=!!state.georgi[id];
+    const bd=document.getElementById("d-"+k), bg=document.getElementById("g-"+k);
+    bd.classList.toggle("on",d); bg.classList.toggle("on",g);
+    bd.disabled = me!=="david"; bg.disabled = me!=="georgi";
+    document.getElementById("row-"+k).classList.toggle("both", d&&g);
+  });
+  ["david","georgi"].forEach(w=>{
+    const done = ALL.filter(l=>state[w][l[0]]);
+    const cr = done.reduce((a,l)=>a+l[2],0);
+    document.getElementById("stat-"+w).textContent =
+      done.length+" / "+TOTAL+" lectures · "+(Math.round(cr*100)/100)+" CME credits earned";
+    document.getElementById("bar-"+w).style.width = (done.length/TOTAL*100)+"%";
+  });
+}
+
+function setSync(cls,text){
+  document.getElementById("syncdot").className = "dot "+cls;
+  document.getElementById("synctext").textContent = text;
+}
+
+async function fetchState(){
+  const r = await fetch(BLOB_URL, {headers:{"Accept":"application/json"}, cache:"no-store"});
+  if(!r.ok) throw new Error("GET "+r.status);
+  const j = await r.json();
+  return {david:j.david||{}, georgi:j.georgi||{}};
+}
+async function putState(s){
+  const r = await fetch(BLOB_URL, {
+    method:"PUT",
+    headers:{"Content-Type":"application/json","Accept":"application/json"},
+    body: JSON.stringify({david:s.david, georgi:s.georgi, updated:new Date().toISOString()})
+  });
+  if(!r.ok) throw new Error("PUT "+r.status);
+}
+
+function toggle(who,id){
+  if(who!==me) return;
+  pendingOps.push({who,id});
+  // optimistic UI
+  if(state[who][id]) delete state[who][id]; else state[who][id]=true;
+  renderAll();
+  processOps();
+}
+async function processOps(){
+  if(syncBusy || !pendingOps.length) return;
+  syncBusy = true;
+  setSync("busy","Syncing…");
+  try{
+    const ops = pendingOps.splice(0);
+    const remote = await fetchState();          // merge: take partner's column fresh
+    const partner = me==="david" ? "georgi" : "david";
+    state[partner] = remote[partner];
+    ops.length; // my column already reflects all my taps (optimistic)
+    await putState(state);
+    setSync("ok","Synced · "+timeNow());
+  }catch(e){
+    setSync("err","Sync failed — will retry");
+    setTimeout(processOps, 4000);
+  }finally{
+    syncBusy = false;
+    if(pendingOps.length) processOps(); else renderAll();
+  }
+}
+
+async function refresh(){
+  if(syncBusy || pendingOps.length) return;
+  try{
+    state = await fetchState();
+    renderAll();
+    setSync("ok","Synced · "+timeNow());
+  }catch(e){
+    setSync("err","Offline — retrying");
+  }
+}
+function timeNow(){
+  return new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+}
+
+buildDOM();
+if(!me) document.getElementById("identity").style.display = "flex";
+renderMe(); renderAll();
+refresh();
+setInterval(()=>{ if(document.visibilityState==="visible") refresh(); }, 8000);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") refresh(); });
+window.addEventListener("focus", refresh);
+</script>
+</body>
+</html>
