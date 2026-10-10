@@ -61,6 +61,9 @@
   }
   a.watch:active{background:var(--card2);}
   a.watch svg{width:16px; height:16px; flex:none;}
+  .actions{display:flex; gap:10px; margin:-8px 0 18px;}
+  .actions a.watch{flex:1; margin:0; min-width:0;}
+  a.watch.road{color:var(--gold); border-color:rgba(233,196,106,.35);}
   /* sync status */
   .sync{display:flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; margin:-10px 2px 16px;}
   .dot{width:7px; height:7px; border-radius:50%; background:#4A5568; flex:none;}
@@ -192,10 +195,16 @@
     </div>
   </div>
 
-  <a class="watch" href="https://columbiacme.rievent.com/attendee/mycme/mycme.jsp" target="_blank" rel="noopener">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
-    Watch Lectures
-  </a>
+  <div class="actions">
+    <a class="watch" href="https://columbiacme.rievent.com/attendee/mycme/mycme.jsp" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>
+      Watch Lectures
+    </a>
+    <a class="watch road" id="roadlink" href="plan.html" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h2v18H5zM8 4h11l-2.5 4L19 12H8z"/></svg>
+      Road to ABOM
+    </a>
+  </div>
 
   <div class="sync"><span class="dot" id="syncdot"></span><span id="synctext">Connecting…</span></div>
   <p class="me" id="meline"></p>
@@ -348,6 +357,7 @@ function setIdentity(who){
   renderMe(); renderAll();
 }
 function renderMe(){
+  document.getElementById("roadlink").href = "plan.html" + (me ? "?who="+me : "");
   const el = document.getElementById("meline");
   if(!me){ el.innerHTML=""; return; }
   const name = me==="david" ? "David" : "Georgi";
