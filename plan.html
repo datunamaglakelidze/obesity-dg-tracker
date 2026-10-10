@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Road to ABOM 2027</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#121820">
+<style>
+  :root{
+    --bg:#121820; --card:#1A222E; --card2:#202A38; --line:#2A3444; --deep:#0D1218;
+    --text:#EDEFF4; --muted:#8A93A5;
+    --david:#6B9BEE; --georgi:#3CBFA0; --gold:#E9C46A;
+    --amber:#E0A458; --amber-dim:rgba(224,164,88,.13);
+    --fresh:#B39DFF; --warn:#E07A5F; --warn-dim:rgba(224,122,95,.13);
+    --me:var(--david); --me-dim:rgba(107,155,238,.16);
+  }
+  body.georgi{--me:var(--georgi); --me-dim:rgba(60,191,160,.16);}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html{background:var(--bg);}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 48px);}
+  .wrap{max-width:760px; margin:0 auto; padding:18px 14px 0; display:flex; flex-direction:column; gap:30px;}
+  h1,h2{font-family:Georgia,"Times New Roman",serif; font-weight:600; margin:0; text-wrap:balance;}
+  h1{font-size:26px; line-height:1.2;}
+  h2{font-size:19px;}
+  .sub{color:var(--muted); font-size:13px; margin:4px 0 0;}
+  .num{font-variant-numeric:tabular-nums;}
+  a{color:inherit;}
+  section{display:flex; flex-direction:column; gap:12px;}
+  .shead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .shead p{margin:0; color:var(--muted); font-size:12.5px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;}
+
+  /* top bar */
+  .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .topbar a{display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-size:13px; font-weight:600;
+    color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:7px 12px;}
+  .topbar a:active{background:var(--card2);}
+  .sync{display:flex; align-items:center; gap:7px; color:var(--muted); font-size:12px;}
+  .dot{width:7px; height:7px; border-radius:50%; background:#4A5568; flex:none;}
+  .dot.ok{background:#3CBFA0;} .dot.err{background:var(--warn);} .dot.busy{background:var(--gold);}
+  .who{display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12px;}
+  .who button{font-family:inherit; font-size:12px; font-weight:600; border:1px solid var(--line); background:var(--card); color:var(--muted);
+    border-radius:999px; padding:5px 11px; cursor:pointer;}
+  .who button.on.david{background:var(--david); border-color:var(--david); color:#0E1420;}
+  .who button.on.georgi{background:var(--georgi); border-color:var(--georgi); color:#0E1420;}
+
+  /* stats */
+  .stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px;}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .stat .big{font-size:22px; font-weight:700; line-height:1.15;}
+  .stat .big small{font-size:14px; color:var(--muted); font-weight:600;}
+  .stat .lab{font-size:12px; color:var(--muted);}
+  .bar{height:7px; background:var(--deep); border-radius:99px; overflow:hidden; margin-top:6px;}
+  .bar i{display:block; height:100%; width:0; background:var(--me); border-radius:99px; transition:width .45s ease;}
+  .pace{font-size:13px; padding:9px 12px; border-radius:10px; background:var(--me-dim); color:var(--text);}
+  .pace.behind{background:var(--warn-dim);}
+
+  /* gantt */
+  .gscroll{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -4px; padding:0 4px;}
+  .gantt{min-width:700px; position:relative;}
+  .grow{display:grid; grid-template-columns:150px 1fr; align-items:center; min-height:38px; border-top:1px solid var(--line);}
+  .grow.head{border-top:0; min-height:36px;}
+  .glab{display:flex; flex-direction:column; padding-right:10px; min-width:0;}
+  .glab b{font-size:12.5px; font-weight:600;}
+  .glab span{font-size:11px; color:var(--muted);}
+  .gtrack{position:relative; height:38px;}
+  .grow.head .gtrack{height:36px;}
+  .gmonth{position:absolute; top:3px; font-size:10.5px; color:var(--muted); transform:translateX(3px); white-space:nowrap;}
+  .goverlay{position:absolute; top:0; bottom:0; left:150px; right:0; pointer-events:none;}
+  .ggrid{position:absolute; top:36px; bottom:0; width:1px; background:rgba(255,255,255,.04);}
+  .gtoday{position:absolute; top:18px; bottom:0; width:2px; background:var(--text); opacity:.7;}
+  .gtoday span{position:absolute; top:0; left:5px; font-size:10px; font-weight:700; background:var(--text); color:var(--bg); padding:1px 5px; border-radius:3px; white-space:nowrap;}
+  .gbar{position:absolute; top:11px; height:16px; border-radius:5px; overflow:hidden;}
+  .k-lec{background:var(--me-dim); border:1.5px solid var(--me);}
+  .k-lec i{display:block; height:100%; background:var(--me);}
+  .k-qlight{background:repeating-linear-gradient(135deg,var(--amber-dim) 0 5px,transparent 5px 10px); border:1.5px solid var(--amber);}
+  .k-q{background:var(--amber);}
+  .k-fresh{background:var(--fresh);}
+  .k-opt{border:1.5px dashed var(--muted);}
+  .k-final{background:#5B6577;}
+  .k-exam{background:var(--gold);}
+  .pin{position:absolute; top:10px; width:18px; height:18px; margin-left:-9px; border-radius:50%; background:var(--gold); color:#14110A;
+    font-size:10.5px; font-weight:800; display:grid; place-items:center;}
+  .pins{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 16px; margin-top:12px; font-size:12.5px;}
+  .pins div{display:grid; grid-template-columns:20px 52px 1fr; gap:6px; align-items:start; min-width:0;}
+  .pins i{width:18px; height:18px; border-radius:50%; background:var(--gold); color:#14110A; font-family:inherit; font-size:10.5px; font-weight:800; line-height:18px; text-align:center; font-style:normal;}
+  .pins .d{color:var(--muted);}
+  .legend{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:11.5px; color:var(--muted); margin-top:10px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend i{display:inline-block; width:18px; height:9px; border-radius:3px;}
+
+  /* weeks */
+  .tools{display:flex; gap:8px; flex-wrap:wrap;}
+  .tools button{font-family:inherit; font-size:12.5px; font-weight:600; color:var(--text); background:var(--card); border:1px solid var(--line);
+    border-radius:999px; padding:7px 12px; cursor:pointer;}
+  .tools button:active{background:var(--card2);}
+  .pre{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); border:1px dashed var(--line); border-radius:12px; padding:10px 12px;}
+  .month{display:flex; flex-direction:column; gap:8px;}
+  .mhead{display:flex; justify-content:space-between; align-items:baseline; margin:6px 4px 0;}
+  .mhead h3{margin:0; font-size:12.5px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;}
+  .mhead span{font-size:11.5px; color:var(--muted);}
+  details.week{background:var(--card); border:1px solid var(--line); border-radius:14px; scroll-margin-top:calc(env(safe-area-inset-top) + 12px);}
+  details.week.current{border-color:var(--me); box-shadow:0 0 0 2px var(--me-dim);}
+  details.week.buffer{background:transparent; border-style:dashed;}
+  details.week > summary{list-style:none; cursor:pointer; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:12px 14px;}
+  details.week > summary::-webkit-details-marker{display:none;}
+  .wk{display:flex; flex-direction:column; min-width:62px;}
+  .wk b{font-size:15px; font-weight:700;}
+  .wk span{font-size:11.5px; color:var(--muted); white-space:nowrap;}
+  .wmid{min-width:0; display:flex; flex-direction:column; gap:5px;}
+  .wmid .what{font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .wmid .mini{height:5px; background:var(--deep); border-radius:99px; overflow:hidden;}
+  .wmid .mini i{display:block; height:100%; background:var(--me); border-radius:99px;}
+  .wright{display:flex; align-items:center; gap:8px;}
+  .chip{font-size:11px; font-weight:700; border-radius:999px; padding:3px 8px; white-space:nowrap;}
+  .chip.now{background:var(--me); color:#0E1420;}
+  .chip.done{background:var(--me-dim); color:var(--me);}
+  .chip.left{background:var(--warn-dim); color:var(--warn);}
+  .chip.plain{color:var(--muted); padding-inline:0;}
+  .chev{width:16px; height:16px; color:var(--muted); transition:transform .2s;}
+  details[open] .chev{transform:rotate(180deg);}
+  .wbody{padding:0 14px 14px; display:flex; flex-direction:column; gap:8px;}
+  .glabel{font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-top:4px;}
+  .lec{display:grid; grid-template-columns:22px 44px minmax(0,1fr) auto; gap:9px; align-items:start; font-size:14px; line-height:1.35;}
+  .tick{width:20px; height:20px; border-radius:6px; border:1.5px solid var(--line); background:var(--card2); display:grid; place-items:center; margin-top:-1px;}
+  .tick svg{width:13px; height:13px; opacity:0;}
+  .lec.done .tick{background:var(--me); border-color:var(--me);}
+  .lec.done .tick svg{opacity:1;}
+  .lec.done .ttl{color:var(--muted);}
+  .lec .code{font-size:12px; color:var(--muted); font-weight:600; padding-top:1px;}
+  .lec .ttl small{display:block; color:var(--muted); font-size:11.5px; margin-top:1px;}
+  .lec .dur{font-size:12px; color:var(--muted); padding-top:1px;}
+  .tasks{display:flex; flex-direction:column; gap:6px; margin-top:4px;}
+  .task{font-size:12.5px; border-radius:8px; padding:7px 10px; line-height:1.35;}
+  .task.q{background:var(--amber-dim); border-left:3px solid var(--amber);}
+  .task.m{background:var(--warn-dim); border-left:3px solid var(--warn);}
+  .task.n{background:var(--card2); border-left:3px solid var(--muted);}
+
+  /* questions table */
+  .qrow{display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:10px 0; border-top:1px solid var(--line); font-size:13.5px; line-height:1.4;}
+  .qrow:first-child{border-top:0; padding-top:0;}
+  .qrow .when{color:var(--muted); font-size:12.5px; font-variant-numeric:tabular-nums;}
+  .qrow b{font-weight:700;}
+  .qdot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:1px;}
+  .note{font-size:12.5px; color:var(--muted); margin-top:10px; line-height:1.45;}
+
+  /* purchases */
+  .buy{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px;}
+  .buy div{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:3px; font-size:13px; min-width:0;}
+  .buy .d{font-size:11.5px; font-weight:700; color:var(--gold); letter-spacing:.3px;}
+  .buy b{font-size:14px;}
+  .buy span.m{color:var(--muted); line-height:1.4;}
+  footer{text-align:center; color:#4A5568; font-size:11px;}
+
+  button:focus-visible, a:focus-visible, summary:focus-visible{outline:2px solid var(--me); outline-offset:2px;}
+  @media (max-width:560px){
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .stats .stat:last-child{grid-column:1 / -1;}
+    .buy,.pins{grid-template-columns:minmax(0,1fr);}
+    .lec{grid-template-columns:22px 38px minmax(0,1fr) auto; font-size:13.5px;}
+    .qrow{grid-template-columns:minmax(0,1fr); gap:2px;}
+  }
+  @media (prefers-reduced-motion:reduce){ .bar i,.chev{transition:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <a href="./">← Tracker</a>
+    <a href="fridge.pdf" target="_blank" rel="noopener">Fridge PDF</a>
+  </div>
+
+  <header>
+    <h1>Road to ABOM 2027</h1>
+    <p class="sub">Columbia lectures until mid-March, then questions. Exam window Oct 12–26, 2027.</p>
+    <div class="sync" style="margin-top:8px"><span class="dot" id="syncdot"></span><span id="synctext">Connecting…</span></div>
+  </header>
+
+  <section>
+    <div class="shead">
+      <h2>Where I am</h2>
+      <div class="who" id="who"><span>Showing</span><button class="david" data-w="david">David</button><button class="georgi" data-w="georgi">Georgi</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="big num" id="sLec">–</span><span class="lab">Columbia lectures done</span><div class="bar"><i id="bLec"></i></div></div>
+      <div class="stat"><span class="big num" id="sCr">–</span><span class="lab">CME credit hours done</span><div class="bar"><i id="bCr"></i></div></div>
+      <div class="stat"><span class="big num" id="sWeek">–</span><span class="lab" id="sWeekLab">this week</span><div class="bar"><i id="bWeek"></i></div></div>
+    </div>
+    <div class="pace" id="pace">Loading progress…</div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Year at a glance</h2><p>Columbia bars fill as you tick lectures in the tracker.</p></div>
+    <div class="card">
+      <div class="gscroll"><div class="gantt" id="gantt"></div></div>
+      <div class="legend">
+        <span><i class="k-lec" style="border-width:1px"></i>Columbia (filled = done)</span>
+        <span><i class="k-qlight" style="border-width:1px"></i>Topic sets after each session</span>
+        <span><i class="k-q"></i>OMR bank, full mode</span>
+        <span><i class="k-fresh"></i>Second, unseen bank</span>
+        <span><i class="k-opt" style="border-width:1px"></i>Optional</span>
+        <span><i class="k-exam"></i>Exam window</span>
+      </div>
+      <div class="pins" id="pins"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Week by week</h2><p>Tick lectures in the tracker. This page follows.</p></div>
+    <div class="tools">
+      <button id="btnNow">Jump to this week</button>
+      <button id="btnOpen">Expand all</button>
+      <button id="btnClose">Collapse all</button>
+    </div>
+    <div class="pre" id="pre">Before the plan: Sessions 1–2</div>
+    <div id="weeks" style="display:flex;flex-direction:column;gap:14px"></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Questions after Columbia</h2><p>Draft. We will adjust it in March.</p></div>
+    <div class="card">
+      <div class="qrow"><span class="when">Mar 15–21</span><span><span class="qdot" style="background:var(--amber)"></span><b>Mock 1.</b> 100 mixed OMR questions, timed, in two sittings.</span></div>
+      <div class="qrow"><span class="when">Mar 22 – May 2</span><span><span class="qdot" style="background:var(--amber)"></span>The rest of the unseen OMR bank in timed, mixed blocks of 40–50 (~60 a week). Log every miss.</span></div>
+      <div class="qrow"><span class="when">May 3 – Jun 13</span><span><span class="qdot" style="background:var(--amber)"></span>Redo every missed or flagged question. Read the OMA Obesity Algorithm and TOS <i>Clinical Management of Obesity</i> for weak areas.</span></div>
+      <div class="qrow"><span class="when">Jun 15</span><span><span class="qdot" style="background:var(--warn)"></span><b>Submit the ABOM application.</b> Early deadline Jul 10.</span></div>
+      <div class="qrow"><span class="when">Jun 27</span><span><span class="qdot" style="background:var(--fresh)"></span><b>Mock 2.</b> 100 fresh questions from the second bank. Decide on the review course by Jul 1.</span></div>
+      <div class="qrow"><span class="when">Jul – Sep 12</span><span><span class="qdot" style="background:var(--fresh)"></span>Rest of the second bank, weak topics first. Review course in August if chosen.</span></div>
+      <div class="qrow"><span class="when">Aug 29</span><span><span class="qdot" style="background:var(--fresh)"></span><b>Mock 3.</b> 100 fresh questions, timed.</span></div>
+      <div class="qrow"><span class="when">Sep 26</span><span><span class="qdot" style="background:var(--gold)"></span><b>Mock 4.</b> The 50 OMR bonus questions, kept unseen until now.</span></div>
+      <div class="qrow"><span class="when">Sep 13 – Oct 11</span><span><span class="qdot" style="background:#5B6577"></span>Error log and blueprint-weighted review: treatment 60%, evaluation 37%, pediatrics 15%.</span></div>
+      <p class="note">Why a second bank: by summer you will have seen every OMR question, some twice, so those scores measure memory of the question. A different company’s bank gives an honest read, like NBME self-assessments after UWorld.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>Purchases and deadlines</h2></div>
+    <div class="buy">
+      <div><span class="d">AFTER OCT 20, 2026</span><b>OMR 2027 Ultimate · $289.99</b><span class="m">Not the 2026 bank, which shuts off Oct 20. Buy before Sep 1, 2027 to keep the pass guarantee.</span></div>
+      <div><span class="d">BY MID-JUNE 2027</span><b>Second question bank</b><span class="m">Rosh Review Obesity Medicine (350+ questions) or the OMA Self-Assessment Program.</span></div>
+      <div><span class="d">DECIDE BY JUL 1, 2027</span><b>Columbia 2027 review course</b><span class="m">Not in your package. About $198 with the 60% past-participant discount. Only if Mock 2 shows broad gaps.</span></div>
+      <div><span class="d">JUN 15 · DEADLINE JUL 10, 2027</span><b>ABOM application</b><span class="m">All 63.5 Columbia credits claimed first. $1,500 early, then $1,750 until Aug 7.</span></div>
+    </div>
+  </section>
+
+  <footer>Progress comes from the tracker. This page only reads it.</footer>
+</div>
+
+<script>
+const BLOB_URL = "https://obesity-dg-tracker-default-rtdb.firebaseio.com/state.json";
+
+// Lecture catalogue (same ids, credits and speakers as the tracker)
+const L = {
+ "01.01":["Epidemiology and Health Risks of Obesity",.75,"Louis Aronne, MD"],
+ "01.02":["How Bias and Stigma Influence the Outcomes of Obesity Prevention and Treatment",.75,"Ted Kyle, RPh"],
+ "01.03":["Obesity Complications and Co-Morbidities",.75,"Beverly Tchang, MD"],
+ "01.04":["Physiology and Pathophysiology of Obesity",.75,"Sabrina Diano, PhD"],
+ "01.05":["Genetics of Obesity and Weight Regulation",.75,"Rudolph Leibel, MD"],
+ "01.06":["In the Post-GLP1 World, Have We Cured Obesity?",.75,"Giles Yeo, PhD"],
+ "02.01":["Nutrition Recommendations for Adults with Obesity",.75,"Morgan Dickison, RDN"],
+ "02.02":["Weighty Matters: Low-Carbohydrate and Low-Fat Diets",.75,"Michael Rosenbaum, MD"],
+ "02.03":["Food Order/Nutrient Sequence: Physiological Effects and Therapeutic Implications",.75,"Alpana Shukla, MD"],
+ "02.04":["The Landscape of Behavioral Interventions in Obesity Medicine",.75,"Ariana Chao, PhD"],
+ "02.05":["The Role of Physical Activity in Obesity Management",.75,"Keith Diaz, PhD"],
+ "03.01":["Guidelines and Standards of Care for the Treatment of Obesity",1,"Louis Aronne, MD & Alpana Shukla, MD"],
+ "03.02":["Overview of the Medical Assessment of Adult Obesity",.75,"Sarah Barenbaum, MD"],
+ "03.03":["On-Label Pharmacological Approaches to Obesity",.75,"Katherine Saunders, MD"],
+ "03.04":["Off-Label Pharmacotherapy for Obesity",.75,"Tirissa J. Reid, MD"],
+ "03.05":["Side Effects of Pharmacological Treatment and Their Management",1,"Judith Korner, MD, PhD"],
+ "04.01":["Addressing Weight Bias in Clinical Settings",.75,"Scott Kahan, MD"],
+ "04.02":["Beyond BMI – Strategies to Optimize Clinician-Supported Weight Loss Plans",1,"Eugene Lucas, MD"],
+ "04.03":["Mental Health and Obesity",.5,"Sasidhar Gunturu, MD"],
+ "04.04":["Case Session: Pharmacology & Behavioral Obesity Medicine Strategies in Practice",.5,"Jamie Kane, MD"],
+ "04.05":["Obesity and Type 2 Diabetes",.75,"Joshua Cook, MD, PhD"],
+ "04.06":["Losing Weight and Keeping It Off: Different Problems, Different Solutions",.75,"Michael Rosenbaum, MD"],
+ "04.07":["KEYNOTE: Obesity Across the Kidney Disease Continuum",1,"Babak Orandi, MD, PhD"],
+ "05.01":["A Brief Family-Centered Approach to Obesity Counseling in Pediatric Care",.75,"Eugene Dinkevich, MD"],
+ "05.02":["Pharmacotherapy for Obesity in Youth",.75,"Claudia Fox, MD"],
+ "05.03":["Pediatric Metabolic and Bariatric Surgery: Meds +/− Surgery +/− Meds",1,"Jeffrey Zitsman, MD"],
+ "05.04":["Case Session: Managing Pediatric Obesity in Practice",.75,"Cynthia Akagbosu, MD & Alyson Weiner, MD"],
+ "06.01":["Women's Health and Obesity: How Midlife and Menopause Influence Weight",.75,"Maria Daniela Hurtado Andrade, MD, PhD"],
+ "06.02":["Metabolic Dysfunction-Associated Steatotic Liver Disease (MASLD)",.75,"Sonal Kumar, MD"],
+ "06.03":["The Role of Sleep in Obesity",.5,"Ana C. Krieger, MD"],
+ "06.04":["The Obesity-Cancer Connection",.5,"Rachel Perry, PhD"],
+ "06.05":["Obesity-Related Cardiovascular and Renal Disease: Risks and Care Strategies",.5,"Michael Weintraub, MD"],
+ "06.06":["Obesity Medicine Certification Overview (ABOM, no credit, worth watching)",0,"Josie Burke"],
+ "07.01":["Endobariatrics: Advanced Endoscopic Techniques",.75,"Chino Aneke-Nash, MD, PhD"],
+ "07.02":["Weight Loss Surgery: Pre/Post-Operative Processes, Procedures and Outcomes",.75,"Abraham Krikhely, MD"],
+ "07.03":["Complications of Bariatric Surgery",.75,"Gregory Dakin, MD"],
+ "07.04":["Nutrient Metabolism and Obesity: Special Considerations After Bariatric Surgery",1,"Jeffrey Mechanick, MD"],
+ "07.05":["Obesity in the Older Adult Population",.75,"John Batsis, MD"],
+ "08.01":["Individualized and Long-Term Obesity Treatment Management",.75,"Devika Umashanker, MD"],
+ "08.02":["Advanced Cases I: Obesity and Cancer — Complex Cases and Expert Panel",1.25,"Sarah Schmitz, MD & Michael Bonafede, DO"],
+ "08.03":["Advanced Cases II: Obesity Care with Psychiatric Comorbidity — Panel Case Discussion",1.25,"Chanel Ligon, MD & Aditi Rao, MD"],
+ "A1.01":["From Brain to Bedside: How Neuroscience Informs Clinical Care",.75,"Ellen A. Schur, MD"],
+ "A1.02":["Adipocyte Biology",.5,"Paul Cohen, MD, PhD"],
+ "A1.03":["Epigenetics and the Development of Obesity",.75,"Lori Zeltser, PhD"],
+ "A1.04":["Aging and Metabolism",.5,"Luigi Fontana, PhD"],
+ "A1.05":["The Effects of Physical Activity on Weight Loss and Maintenance of Weight Loss",.75,"John M. Jakicic, MD, PhD"],
+ "A1.06":["Metabolic and Hormonal Mechanisms of Bariatric Surgery",1,"Neil Floch, MD"],
+ "A1.07":["Understanding Lipedema: Tools for the Obesity Medicine Clinician",1,"Courtney Mascio, OT/L & Celia Egan, MD"],
+ "A2.01":["Obesity and Maternal Health: Pregnancy & Postpartum",1,"Courtney Younglove, MD"],
+ "A2.02":["Impact of Maternal Obesity on Placental Development and Function",.75,"Perrie O'Tierney-Ginn, PhD"],
+ "A2.03":["In Utero and Lactational Programming of Obesity",.75,"Sarbattama \"Rimi\" Sen, MD"],
+ "A2.04":["Early Life Origins of Obesity – The First 1,000 Days of Life",.75,"Ilene Fennoy, MD"],
+ "A2.05":["Childhood Obesity: Special Considerations",.75,"Vidhu Thaker, MD"],
+ "A2.06":["Pediatric MASLD",1,"Ali A. Mencin, MD"],
+ "A2.07":["Child Obesity: The Role of the Parents",.75,"Susan Carnell, PhD"],
+ "A3.01":["Nutrition Assessment and Counseling",.75,"Heather Seid, DCN"],
+ "A3.02":["Mindful Eating Techniques",.5,"Jamie Leskowitz, RD"],
+ "A3.03":["Diet: More Than Just What's on the Plate – Meal Timing and Frequency",1,"Marie-Pierre St-Onge, PhD"],
+ "A3.04":["Ultra-processed Food Environments and Body Weight Regulation",.5,"Kevin Hall, PhD"],
+ "A3.05":["Weight Loss Supplements",.5,"David Berger, MD"],
+ "A3.06":["Obesity and Eating Disorders",1,"Kelly C. Allison, PhD"],
+ "A4.01":["Behavior Modification Counseling for Obesity Management",.75,"Brooke Aggarwal, EdD"],
+ "A4.02":["Motivational Interviewing in Obesity Counseling",.5,"Prantik Saha, MD"],
+ "A4.03":["Self-monitoring for Weight Management",.5,"Carolyn Bramante, MD"],
+ "A4.04":["Improving Sleep in Your Patients: Strategies and Outcomes",1,"Ari Schecter, PhD"],
+ "A4.05":["Movement Recommendations for People with Reduced Mobility",1.25,"Ali Geronimo, RD"],
+ "A4.06":["Mental Health and Obesity: Shared Complexity, Mechanisms, Decision Making",.75,"Robyn Pashby, PhD"],
+ "A4.07":["Stress-Induced Eating",.75,"Rebecca Klatzkin, PhD"],
+ "A5.01":["How Do Race and Ethnicity Affect the Development of Obesity and Co-morbidities?",.75,"Ramfis Nieto-Martinez, MD"],
+ "A5.02":["Food Insecurity and Obesity",.5,"Kim Hekimian, PhD"],
+ "A5.03":["How and Why Weight Stigma Drives the Obesity 'Epidemic' and Harms Health",.5,"A. Janet Tomiyama, PhD"],
+ "A5.04":["Management of Obesity in Adults with Limited Means",1.5,"Tirissa J. Reid, MD & Jamie A. Mullally, MD"],
+ "A5.05":["Obesity Advocacy Landscape",1,"Tracy Zvenyach, PhD"],
+ "A6.01":["Creating Individualized Treatment Plans",.75,"Tirissa J. Reid, MD"],
+ "A6.02":["A New Era of Anti-Obesity Pharmacotherapy",.75,"Jamie A. Mullally, MD"],
+ "A6.03":["Managing Weight Regain",.75,"Ilana Redmond, MD"],
+ "A6.04":["Sarcopenic Obesity, Malnutrition and Nutrition Support After Weight Loss Surgery",.75,"Michael Owen-Michaane, MD"],
+ "A6.05":["Incorporating Culinary Medicine into Obesity Medicine Practice",.75,"Ileana Vargas, MD"],
+ "A6.06":["Women's Health and Obesity: Management Through Clinical Cases",.75,"Aditi Rao, MD & Beverly Tchang, MD"],
+ "A6.07":["Mental Health and Obesity: Case-Based Presentation",.5,"Zerimar Ramirez Lopez, MD"],
+ "A7.01":["Coding and Reimbursement in Obesity Medicine",.5,"Adam Gilden, MD"],
+ "A7.02":["Setting Up an Obesity Management Practice",.75,"Jamie A. Mullally, MD"],
+ "A7.03":["Practicing with Professionalism: Obesity Medicine Clinical Practice Steps",1,"Deborah Bade Horn, DO"]
+};
+const label = id => id[0]==="A" ? ["I","II","III","IV","V","VI","VII"][+id[1]-1]+"."+(+id.slice(3)) : id;
+const ALL = Object.keys(L);
+const PRE = ["01.01","01.02","01.03","01.04","01.05","01.06","02.01","02.02","02.03","02.04","02.05"];
+const TOTAL_CR = ALL.reduce((a,id)=>a+L[id][1],0);
+
+// The plan: 22 weeks, Monday to Sunday
+const R = (p,a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(p+String(i).padStart(2,"0"));return o;};
+const WEEKS = [
+ {a:"2026-10-12", what:"Session 3 · guidelines and pharmacotherapy", g:[["Part 1 · Session 3",R("03.",1,5)]], t:[["q","Make a free OMR account and do the 25 free sample questions, untimed"]]},
+ {a:"2026-10-19", what:"Session 4 · part 1", g:[["Session 4",R("04.",1,4)]], t:[["n","The 2026 OMR bank shuts off Oct 20. Buy the 2027 Ultimate when it is released"]]},
+ {a:"2026-10-26", what:"Session 4 · part 2", g:[["Session 4",R("04.",5,7)]], t:[["q","Topic set: Sessions 3–4 · pharmacotherapy, assessment, T2D, maintenance · 30 Q"]]},
+ {a:"2026-11-02", what:"Session 5 · pediatrics", g:[["Session 5",R("05.",1,4)]], t:[["q","Topic set: Session 5 pediatrics · 20 Q"]]},
+ {a:"2026-11-09", what:"Session 6 · weight-related conditions", g:[["Session 6",R("06.",1,6)]], t:[["q","Topic set: Session 6 · women’s health, MASLD, sleep, cancer, CV/renal · 20 Q"]]},
+ {a:"2026-11-16", what:"Session 7 · procedures and surgery", g:[["Session 7",R("07.",1,3)]], t:[]},
+ {a:"2026-11-23", what:"Session 7 · continued (Thanksgiving, light)", g:[["Session 7",R("07.",4,5)]], t:[["q","Topic set: Session 7 · bariatric surgery, endoscopy, older adults · 25 Q"]]},
+ {a:"2026-11-30", what:"Session 8 · finish Part 1", g:[["Session 8",R("08.",1,3)]], t:[["q","Topic set: Sessions 1, 2 and 8 · epidemiology, physiology, genetics, nutrition, behavior · 40 Q"],["m","Course evaluation and claim 31.25 credits by Dec 6"]]},
+ {a:"2026-12-07", what:"Part 2 · Section I", g:[["Part 2 · Section I · Foundational concepts",R("A1.",1,4)]], t:[]},
+ {a:"2026-12-14", what:"Section I · continued", g:[["Section I",R("A1.",5,7)]], t:[["q","Topic set: Section I · 20 Q"]]},
+ {a:"2026-12-21", what:"Buffer week · catch up or rest", buffer:true, g:[], t:[["n","Buffer week. Catch up on anything that slipped, or rest"]]},
+ {a:"2026-12-28", what:"Section II · maternal (holiday, light)", g:[["Section II · Maternal and childhood obesity",R("A2.",1,2)]], t:[]},
+ {a:"2027-01-04", what:"Section II · continued", g:[["Section II",R("A2.",3,5)]], t:[]},
+ {a:"2027-01-11", what:"Section II end · Section III start", g:[["Section II",R("A2.",6,7)],["Section III · Nutrition and diets",["A3.01"]]], t:[["q","Topic set: Section II · maternal and pediatric · 25 Q"]]},
+ {a:"2027-01-18", what:"Section III · nutrition and diets", g:[["Section III",R("A3.",2,5)]], t:[]},
+ {a:"2027-01-25", what:"Section III end · Section IV start", g:[["Section III",["A3.06"]],["Section IV · Behavior modification",R("A4.",1,3)]], t:[["q","Topic set: Section III · nutrition and diets · 20 Q"]]},
+ {a:"2027-02-01", what:"Section IV · behavior, sleep, mental health", g:[["Section IV",R("A4.",4,6)]], t:[]},
+ {a:"2027-02-08", what:"Section IV end · Section V start", g:[["Section IV",["A4.07"]],["Section V · Culture and weight stigma",R("A5.",1,3)]], t:[["q","Topic set: Section IV · behavior, sleep, mental health · 20 Q"]]},
+ {a:"2027-02-15", what:"Section V · end", g:[["Section V",R("A5.",4,5)]], t:[["q","Topic set: Section V · stigma, food insecurity, access · 15 Q"]]},
+ {a:"2027-02-22", what:"Section VI · case-based learning", g:[["Section VI · Case-based learning",R("A6.",1,4)]], t:[]},
+ {a:"2027-03-01", what:"Section VI · end", g:[["Section VI",R("A6.",5,7)]], t:[["q","Topic set: Section VI · cases · 25 Q"]]},
+ {a:"2027-03-08", what:"Section VII · finish Part 2", g:[["Section VII · Running the practice",R("A7.",1,3)]], t:[["q","Topic set: Section VII · coding, professionalism · 10 Q"],["m","Course evaluation and claim 32.25 credits. All 63.5 documented"]]}
+];
+const DAY = 864e5;
+const D = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const fmt = d => d.toLocaleDateString("en-US",{month:"short", day:"numeric"});
+WEEKS.forEach((w,i)=>{ w.i=i; w.start=D(w.a); w.end=new Date(w.start.getTime()+7*DAY); w.ids=w.g.flatMap(g=>g[1]); w.hrs=w.ids.reduce((a,id)=>a+L[id][1],0); });
+const today = new Date(); today.setHours(0,0,0,0);
+const curIdx = WEEKS.findIndex(w=>today>=w.start && today<w.end);
+const nextIdx = WEEKS.findIndex(w=>today<w.start);
+const hm = h => { const m=Math.round(h*60); return m===0?"–":(m>=60?Math.floor(m/60)+"h"+(m%60?" "+m%60+"m":""):m+"m"); };
+const key = id => id.replace(".","_");
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#0E1420" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/></svg>';
+const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+// ---------- who ----------
+const params = new URLSearchParams(location.search);
+let who = params.get("who") || (()=>{ try{ return localStorage.getItem("odg_identity"); }catch(e){ return null; } })() || "david";
+if(who!=="david" && who!=="georgi") who="david";
+let state = {david:{}, georgi:{}};
+const isDone = id => !!(state[who] && state[who][key(id)]);
+
+// ---------- open/closed memory ----------
+let openPref = {};
+try{ openPref = JSON.parse(localStorage.getItem("road_open")||"{}") || {}; }catch(e){ openPref = {}; }
+const savePref = () => { try{ localStorage.setItem("road_open", JSON.stringify(openPref)); }catch(e){} };
+
+// ---------- static parts ----------
+function buildGantt(){
+  const G0=D("2026-10-01"), G1=D("2027-11-01");
+  const pct = d => Math.min(100,Math.max(0,(d-G0)/(G1-G0)*100));
+  const lanes = [
+    ["Columbia · Part 1","Oct 12 – Dec 6","k-lec","2026-10-12","2026-12-06","p1"],
+    ["Columbia · Part 2","Dec 7 – Mar 14","k-lec","2026-12-07","2027-03-14","p2"],
+    ["OMR topic sets","after each session","k-qlight","2026-10-12","2027-03-14"],
+    ["OMR bank, timed","Mar 15 – May 2","k-q","2027-03-15","2027-05-02"],
+    ["Redo misses + reading","May 3 – Jun 13","k-q","2027-05-03","2027-06-13"],
+    ["Second, unseen bank","Jun 27 – Sep 12","k-fresh","2027-06-27","2027-09-12"],
+    ["Review course","optional · August","k-opt","2027-08-01","2027-08-31"],
+    ["Final review","Sep 13 – Oct 11","k-final","2027-09-13","2027-10-11"],
+    ["ABOM exam","Oct 12–26","k-exam","2027-10-12","2027-10-26"]
+  ];
+  const pins = [
+    ["2026-10-21","Buy the 2027 OMR bank"],
+    ["2026-12-06","Part 1 done · claim 31.25 credits"],
+    ["2027-03-14","Part 2 done · all 63.5 credits claimed"],
+    ["2027-06-15","Submit the ABOM application"],
+    ["2027-06-27","Mock 2 · review-course decision"],
+    ["2027-07-10","ABOM early deadline"],
+    ["2027-08-29","Mock 3"],
+    ["2027-09-26","Mock 4 · 50 bonus questions"],
+    ["2027-10-12","Exam window opens"]
+  ];
+  let h='<div class="grow head"><div class="glab"></div><div class="gtrack">';
+  for(let i=0;i<13;i++){ const md=new Date(2026,9+i,1); h+='<span class="gmonth" style="left:'+pct(md)+'%">'+md.toLocaleDateString("en-US",{month:"short"})+(i===0||md.getMonth()===0?" ’"+String(md.getFullYear()).slice(2):"")+'</span>'; }
+  h+='</div></div>';
+  lanes.forEach(r=>{
+    const a=pct(D(r[3])), b=pct(new Date(D(r[4]).getTime()+DAY));
+    h+='<div class="grow"><div class="glab"><b>'+r[0]+'</b><span>'+r[1]+'</span></div><div class="gtrack"><div class="gbar '+r[2]+'" style="left:'+a+'%;width:'+Math.max(.6,b-a)+'%">'+(r[5]?'<i id="fill-'+r[5]+'" style="width:0%"></i>':'')+'</div></div></div>';
+  });
+  h+='<div class="grow"><div class="glab"><b>Checkpoints</b><span>numbered below</span></div><div class="gtrack">';
+  pins.forEach((p,i)=>{ h+='<div class="pin" style="left:'+pct(D(p[0]))+'%" title="'+fmt(D(p[0]))+': '+p[1]+'">'+(i+1)+'</div>'; });
+  h+='</div></div><div class="goverlay">';
+  for(let i=1;i<13;i++) h+='<div class="ggrid" style="left:'+pct(new Date(2026,9+i,1))+'%"></div>';
+  if(today>=G0 && today<G1) h+='<div class="gtoday" style="left:'+pct(today)+'%"><span>Today</span></div>';
+  h+='</div>';
+  document.getElementById("gantt").innerHTML=h;
+  document.getElementById("pins").innerHTML = pins.map((p,i)=>'<div><i>'+(i+1)+'</i><span class="d">'+fmt(D(p[0]))+'</span><span>'+p[1]+'</span></div>').join("");
+}
+
+function buildWeeks(){
+  let out="", month="";
+  WEEKS.forEach(w=>{
+    const m = w.start.toLocaleDateString("en-US",{month:"long", year:"numeric"});
+    if(m!==month){
+      if(month) out+='</div>';
+      out+='<div class="month" data-month="'+m+'"><div class="mhead"><h3>'+m+'</h3><span class="mstat"></span></div>';
+      month=m;
+    }
+    const endShown = new Date(w.end.getTime()-DAY);
+    let body="";
+    w.g.forEach(g=>{
+      body+='<div class="glabel">'+esc(g[0])+'</div>';
+      g[1].forEach(id=>{
+        body+='<div class="lec" data-id="'+id+'"><span class="tick">'+CHECK+'</span><span class="code">'+label(id)+'</span><span class="ttl">'+esc(L[id][0])+'<small>'+esc(L[id][2])+'</small></span><span class="dur">'+hm(L[id][1])+'</span></div>';
+      });
+    });
+    if(w.t.length) body+='<div class="tasks">'+w.t.map(t=>'<div class="task '+t[0]+'">'+esc(t[1])+'</div>').join("")+'</div>';
+    out+='<details class="week'+(w.buffer?" buffer":"")+'" data-i="'+w.i+'" id="wk'+(w.i+1)+'">'+
+      '<summary><div class="wk"><b>Week '+(w.i+1)+'</b><span>'+fmt(w.start)+' – '+fmt(endShown)+'</span></div>'+
+      '<div class="wmid"><span class="what">'+esc(w.what)+'</span>'+(w.ids.length?'<div class="mini"><i style="width:0%"></i></div>':'')+'</div>'+
+      '<div class="wright"><span class="chip plain">'+(w.buffer?"buffer":hm(w.hrs))+'</span>'+CHEV+'</div></summary>'+
+      '<div class="wbody">'+body+'</div></details>';
+  });
+  out+='</div>';
+  const box=document.getElementById("weeks");
+  box.innerHTML=out;
+  box.querySelectorAll("details.week").forEach(d=>{
+    d.addEventListener("toggle",()=>{ if(d.dataset.sync==="1") return; openPref[d.dataset.i]=d.open; savePref(); });
+  });
+}
+
+// default open: this week + first week with unfinished lectures
+function defaultOpen(i){
+  const w=WEEKS[i];
+  if(i===curIdx) return true;
+  if(curIdx<0 && i===nextIdx) return true;
+  const firstOpen = WEEKS.findIndex(x=>x.ids.some(id=>!isDone(id)));
+  return i===firstOpen;
+}
+
+// ---------- render with progress ----------
+function render(){
+  document.body.classList.toggle("georgi", who==="georgi");
+  document.querySelectorAll("#who button").forEach(b=>b.classList.toggle("on", b.dataset.w===who));
+  const done = ALL.filter(isDone);
+  const cr = done.reduce((a,id)=>a+L[id][1],0);
+  document.getElementById("sLec").innerHTML = done.length+' <small>/ '+ALL.length+'</small>';
+  document.getElementById("bLec").style.width = (done.length/ALL.length*100)+"%";
+  document.getElementById("sCr").innerHTML = (Math.round(cr*100)/100)+' <small>/ '+TOTAL_CR+'</small>';
+  document.getElementById("bCr").style.width = (cr/TOTAL_CR*100)+"%";
+
+  // this week
+  const wi = curIdx>=0 ? curIdx : (nextIdx>=0 ? nextIdx : -1);
+  if(wi>=0){
+    const w=WEEKS[wi], wd=w.ids.filter(isDone).length;
+    document.getElementById("sWeek").innerHTML = w.buffer ? "Buffer" : wd+' <small>/ '+w.ids.length+'</small>';
+    document.getElementById("sWeekLab").textContent = curIdx>=0 ? "Week "+(wi+1)+" lectures done" : "Week "+(wi+1)+" starts "+fmt(w.start);
+    document.getElementById("bWeek").style.width = w.ids.length ? (wd/w.ids.length*100)+"%" : "0%";
+  } else {
+    document.getElementById("sWeek").textContent = "Done"; document.getElementById("sWeekLab").textContent = "lecture plan finished";
+  }
+
+  // pace vs plan (target = everything planned before this week starts)
+  const lastFull = curIdx>=0 ? curIdx-1 : (nextIdx>=0 ? nextIdx-1 : WEEKS.length-1);
+  const target = PRE.length + WEEKS.slice(0,lastFull+1).reduce((a,w)=>a+w.ids.length,0);
+  const diff = done.length - target;
+  const pace = document.getElementById("pace");
+  const nm = who==="david"?"David":"Georgi";
+  pace.classList.toggle("behind", diff<0);
+  pace.textContent = diff>0 ? nm+" is "+diff+" lecture"+(diff===1?"":"s")+" ahead of plan. Plan by last Sunday: "+target+"."
+    : diff===0 ? nm+" is right on plan ("+target+" lectures by last Sunday)."
+    : nm+" is "+(-diff)+" lecture"+(diff===-1?"":"s")+" behind plan. Plan by last Sunday: "+target+". The buffer week (Dec 21–27) is there for this.";
+
+  // pre row
+  const pd = PRE.filter(isDone).length;
+  document.getElementById("pre").textContent = "Before the plan: Sessions 1–2 · "+pd+" of "+PRE.length+" done"+(pd===PRE.length?" ✓":"");
+
+  // gantt fills
+  const p1 = ALL.filter(id=>id[0]!=="A"), p2 = ALL.filter(id=>id[0]==="A");
+  const f1=document.getElementById("fill-p1"), f2=document.getElementById("fill-p2");
+  if(f1) f1.style.width = (p1.filter(isDone).length/p1.length*100)+"%";
+  if(f2) f2.style.width = (p2.filter(isDone).length/p2.length*100)+"%";
+
+  // weeks
+  document.querySelectorAll(".lec[data-id]").forEach(r=>r.classList.toggle("done", isDone(r.dataset.id)));
+  document.querySelectorAll("details.week").forEach(d=>{
+    const i=+d.dataset.i, w=WEEKS[i], n=w.ids.length, k=w.ids.filter(isDone).length;
+    const mini=d.querySelector(".mini i"); if(mini) mini.style.width = n ? (k/n*100)+"%" : "0%";
+    const right=d.querySelector(".wright");
+    let chip='';
+    if(i===curIdx) chip='<span class="chip now">This week · '+k+'/'+n+'</span>';
+    else if(n && k===n) chip='<span class="chip done">Done ✓</span>';
+    else if(n && w.end<=today) chip='<span class="chip left">'+(n-k)+' left</span>';
+    else if(n && k>0) chip='<span class="chip done">'+k+'/'+n+'</span>';
+    else chip='<span class="chip plain">'+(w.buffer?"buffer":hm(w.hrs))+'</span>';
+    right.innerHTML = chip + CHEV;
+    d.classList.toggle("current", i===curIdx || (curIdx<0 && i===nextIdx));
+    const want = (i in openPref) ? openPref[i] : defaultOpen(i);
+    if(d.open!==want){ d.dataset.sync="1"; d.open=want; setTimeout(()=>{d.dataset.sync="";},0); }
+  });
+  document.querySelectorAll(".month").forEach(m=>{
+    const ids=[...m.querySelectorAll(".lec[data-id]")].map(r=>r.dataset.id);
+    m.querySelector(".mstat").textContent = ids.length ? ids.filter(isDone).length+" / "+ids.length+" done" : "";
+  });
+}
+
+// ---------- sync (read only) ----------
+function setSync(c,t){ document.getElementById("syncdot").className="dot "+c; document.getElementById("synctext").textContent=t; }
+const timeNow = () => new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+let busy=false, firstLoad=true;
+async function refresh(){
+  if(busy) return; busy=true;
+  try{
+    const r = await fetch(BLOB_URL,{headers:{"Accept":"application/json"}, cache:"no-store"});
+    if(!r.ok) throw new Error(r.status);
+    const j = (await r.json()) || {};
+    state = {david:j.david||{}, georgi:j.georgi||{}};
+    render(); setSync("ok","Synced with tracker · "+timeNow());
+    if(firstLoad){ firstLoad=false; }
+  }catch(e){ setSync("err","Offline · showing last known progress"); }
+  finally{ busy=false; }
+}
+
+// ---------- controls ----------
+document.querySelectorAll("#who button").forEach(b=>b.addEventListener("click",()=>{ who=b.dataset.w; render(); }));
+document.getElementById("btnOpen").addEventListener("click",()=>{ WEEKS.forEach(w=>openPref[w.i]=true); savePref(); render(); });
+document.getElementById("btnClose").addEventListener("click",()=>{ WEEKS.forEach(w=>openPref[w.i]=false); savePref(); render(); });
+document.getElementById("btnNow").addEventListener("click",()=>{
+  const i = curIdx>=0 ? curIdx : (nextIdx>=0 ? nextIdx : WEEKS.length-1);
+  openPref[i]=true; savePref(); render();
+  document.getElementById("wk"+(i+1)).scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+});
+
+buildGantt(); buildWeeks(); render();
+refresh();
+setInterval(()=>{ if(document.visibilityState==="visible") refresh(); }, 10000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") refresh(); });
+window.addEventListener("focus", refresh);
+</script>
+</body>
+</html>
